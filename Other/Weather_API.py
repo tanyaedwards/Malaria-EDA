@@ -48,15 +48,16 @@ location_list = ['Afghanistan', 'Albania', 'Algeria', 'Andorra', 'Angola', 'Anti
                  'Venezuela', 'Vietnam', 'West Bank and Gaza', 'Zambia', 'Zimbabwe']
 
 #'Angola','Botswana','Lesotho','Malawi','Mozambique','Namibia',
+#'South_Africa','Zambia','Zimbabwe','Comoros','Djibouti','Eritrea','Ethiopia','Kenya','Madagascar',
+#'Mauritius','Rwanda','Seychelles','Somalia',
 
-AU_list=['South_Africa',
-         'Zambia','Zimbabwe','Comoros','Djibouti','Eritrea','Ethiopia','Kenya','Madagascar',
-         'Mauritius','Rwanda','Seychelles','Somalia','South Sudan','Sudan',
-         'Tanzania','Uganda','Burundi','Cameroon','Central African Republic',
-         'Chad','Congo','Democratic Republic of Congo','Equatorial Guinea','Gabon',
-         'Sao Tome and Principe','Algeria','Egypt','Libyan Arab Jamahiriya','Morocco','Tunisia',
-         'Benin','Burkina Faso','Cape Verde', "Cote d'Ivoire",'Gambia','Ghana','Guinea',
-         'Guinea-Bissau','Liberia','Mali','Niger','Nigeria','Senegal','Sierra Leone','Togo',
+AU_list=[
+         'South_Sudan','Sudan',
+         'Tanzania','Uganda','Burundi','Cameroon','Central_African_Republic',
+         'Chad','Congo','Congo','Equatorial_Guinea','Gabon',
+         'Sao_Tome_and_Principe','Algeria','Egypt','Libya','Morocco','Tunisia',
+         'Benin','Burkina_Faso','Cape Verde', "Cote d'Ivoire",'Gambia','Ghana','Guinea',
+         'Guinea-Bissau','Liberia','Mali','Niger','Nigeria','Senegal','Sierra_Leone','Togo',
          'Mauritania']
 
 
