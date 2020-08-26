@@ -9,7 +9,7 @@ Created on Tue Jul 28 16:46:27 2020
 from wwo_hist import retrieve_hist_data
 import os
 
-year = 2009
+year = 2008
 
 os.chdir('countries/{}'.format(year))
 

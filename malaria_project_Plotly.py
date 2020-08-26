@@ -27,11 +27,10 @@ def Rename(old_names, new_names, DF):
         DF = DF.replace(old_names[i],new_names[i])
     return DF
                     
-
 #read in csv files
-est_cases_master = pd.read_csv('cases/malaria_estimated_cases.csv', skiprows=1)
-inc_cases =  pd.read_csv('cases/malaria_case_incidence_per_1000_pop_at_risk.csv', skiprows=1)
-countries_WHO_region = pd.read_csv('countries.csv')
+est_cases_master = pd.read_csv('Data/WHO/cases/malaria_estimated_cases.csv', skiprows=1)
+inc_cases =  pd.read_csv('Data/WHO/cases/malaria_case_incidence_per_1000_pop_at_risk.csv', skiprows=1)
+countries_WHO_region = pd.read_csv('Data/countries.csv')
 #reorder df
 cols = est_cases_master.columns.tolist()
 cols = cols[::-1]
@@ -56,18 +55,22 @@ for country_study in countries_study:
                 print('''Could be this name {}
                 '''.format(country_WHO))
 
-#No. of countries not inluded in study = 86
-#No. of countries in study = 107
-#Together 193 official UN member states. 2 countries are non-member observer states:
-#the Holy See and the State of Palestine
+# =============================================================================
+# #No. of countries not inluded in study = 86
+# #No. of countries in study = 107
+# #Together 193 official UN member states. 2 countries are non-member observer states:
+# #the Holy See and the State of Palestine
+# =============================================================================
 countries_not_in_study=0
 for country_WHO in countries_WHO:
     if country_WHO not in countries_study:
         countries_not_in_study+=1
 
-#Assign World Regions according to WHO system
-#WHO_WorldRegions = ['Africa','Eastern_Mediterranean','Europe',
-#                    'Americas','Southeast_Asia','Western_Pacific']
+# =============================================================================
+# #Assign World Regions according to WHO system
+# #WHO_WorldRegions = ['Africa','Eastern_Mediterranean','Europe',
+# #                    'Americas','Southeast_Asia','Western_Pacific']
+# =============================================================================
 country_region=[]
 for country in countries_study:
     country_df = countries_WHO_region.loc[countries_WHO_region['Country']==country]
@@ -76,7 +79,7 @@ for country in countries_study:
 est_cases_master.insert(1,'WHO_Region',country_region,True)
 
 #Creating separate df for median, min, max
-est_cases = est_cases_master.copy()    #.copy() ensures the original is not altered
+est_cases = est_cases_master.copy()    
 est_cases_min = est_cases_master.copy()
 est_cases_max = est_cases_master.copy()
 est_cases_key_list = est_cases.columns.values.tolist()
@@ -92,8 +95,10 @@ for key in est_cases_key_list:
     est_cases_min[key] = est_cases_minmax_list
     est_cases_max[key] = est_cases_minmax_list
 
-#list1 = [num for num in range(10) if num<5 else num]
-#print(list1)
+# =============================================================================
+# #list1 = [num for num in range(10) if num<5 else num]
+# #print(list1)
+# =============================================================================
 for key in est_cases_key_list:
     est_cases[key] = [num.split('[')[0].replace(' ','') for num in est_cases[key].values]
     est_cases_min[key] = [num.split('[')[-1].split('-')[0].replace(' ','') for num in est_cases_min[key].values]
@@ -104,34 +109,36 @@ for key in est_cases_key_list:
     est_cases_max[key] = [float(num) for num in est_cases_max[key].values]
 
 #Plotting cases by continent
-WHO_region = est_cases.groupby('WHO_Region').sum().reset_index() #sums all data values by 'WHO_Region'
+WHO_region = est_cases.groupby('WHO_Region').sum().reset_index() 
 years = est_cases.columns.tolist()[2:]
 WHO_year_sum=[]
 for year in years:
     WHO_year_sum.append(est_cases[year].sum())
 
-plt.figure()
-ax=plt.subplot()
-WHO_REGIONS = WHO_region['WHO_Region'].tolist()
-for region in WHO_REGIONS:
-    df = WHO_region[WHO_region['WHO_Region']==region]
-    #total cases
-    l = df.values.tolist()[0][1:]
-    l = [num/(10**6) for num in l]
-    plt.plot(range(len(years)), l, label=region)
+# =============================================================================
+# plt.figure()
+# ax=plt.subplot()
 
-ax.set_xticks(range(len(years)))
-ax.set_xticklabels(years)
-plt.xlabel('Year')
-plt.ylabel('Cases (million people)')
-plt.title('Total Number of Estimated Cases of Malaria by Region')
-plt.legend()
+# for region in WHO_REGIONS:
+#     df = WHO_region[WHO_region['WHO_Region']==region]
+#     #total cases
+#     l = df.values.tolist()[0][1:]
+#     l = [num/(10**6) for num in l]
+#     plt.plot(range(len(years)), l, label=region)
+# 
+# ax.set_xticks(range(len(years)))
+# ax.set_xticklabels(years)
+# plt.xlabel('Year')
+# plt.ylabel('Cases (million people)')
+# plt.title('Total Number of Estimated Cases of Malaria by Region')
+# plt.legend()
+# =============================================================================
 
 # Pie Chart with Plotly Package
 fig1 = px.pie(WHO_region, values='2017', names='WHO_Region',
              title='Percentage of Worldwide Cases by WHO Region in 2017')
 #fig.show(renderer='browser')
-fig1.write_image("MalariaCasesPerc2017_WHOregion.pdf")
+fig1.write_image("Figures/pie/MalariaCasesPerc2017_WHOregion.pdf")
 
 #Bar chart with Plotly
 WHO_region_pivot = WHO_region.melt(id_vars='WHO_Region',
@@ -147,22 +154,24 @@ fig2 = px.bar(WHO_region_pivot,
               title='Worldwide Cases of Malaria',
               labels={'value':'Malaria Cases (million people)',
                       'variable':'WHO Region'})
-fig2.write_image('MalariaCases2010_2017_WHOregion.pdf')
+fig2.write_image('Figures/bar/MalariaCases2010_2017_WHOregion.pdf')
 
-#Percentage of total worldwide cases
-yearly_sum=[]
-for year in years:
-    yearly_sum.append(est_cases[year].values.sum())
-
-plt.figure()
-for region in WHO_REGIONS:
-    row_list = WHO_region[WHO_region['WHO_Region']==region].values.tolist()[0][1:]
-    perc_list = [(num1/num2)*100 for num1,num2 in zip(row_list,yearly_sum)]
-    plt.plot(years, perc_list, label=region)
-plt.xlabel('Year')
-plt.ylabel('Total Share of World Cases (%)')
-plt.title('Percentage of Worldwide Cases by Region')
-plt.legend()
+# =============================================================================
+# #Percentage of total worldwide cases
+# yearly_sum=[]
+# for year in years:
+#     yearly_sum.append(est_cases[year].values.sum())
+# 
+# plt.figure()
+# for region in WHO_REGIONS:
+#     row_list = WHO_region[WHO_region['WHO_Region']==region].values.tolist()[0][1:]
+#     perc_list = [(num1/num2)*100 for num1,num2 in zip(row_list,yearly_sum)]
+#     plt.plot(years, perc_list, label=region)
+# plt.xlabel('Year')
+# plt.ylabel('Total Share of World Cases (%)')
+# plt.title('Percentage of Worldwide Cases by Region')
+# plt.legend()
+# =============================================================================
 
 #incidence rate by continent
 countries_study_inc=inc_cases['Country'].tolist()
@@ -174,60 +183,66 @@ inc_cases.insert(1,'WHO_Region',inc_country_region,True)
 inc_cases_region = inc_cases.groupby('WHO_Region').mean().reset_index()
 inc_years=inc_cases.columns.tolist()[2:]
 
-plt.figure()
-ax=plt.subplot()
-for region in WHO_REGIONS:
-    y = inc_cases_region[inc_cases_region['WHO_Region']==region].values.tolist()[0][1:]
-    plt.plot(inc_years, y, label=region)
+# =============================================================================
+# #Plot Incidence of Malaria with MatPlotLib
+# plt.figure()
+# ax=plt.subplot()
+# WHO_REGIONS = WHO_region['WHO_Region'].tolist()
+# for region in WHO_REGIONS:
+#     y = inc_cases_region[inc_cases_region['WHO_Region']==region].values.tolist()[0][1:]
+#     plt.plot(inc_years, y, label=region)
+# ax.set_xticks(range(len(inc_years)))
+# ax.set_xticklabels(inc_years, rotation=45)
+# plt.legend()
+# plt.xlabel('Year')
+# plt.ylabel('Estimated Cases (Number/1000 people at risk)')
+# plt.title('Estimated Incidence of Malaria Cases per 1000 people at risk')
+# =============================================================================
 
-ax.set_xticks(range(len(inc_years)))
-ax.set_xticklabels(inc_years, rotation=45)
-plt.legend()
-plt.xlabel('Year')
-plt.ylabel('Estimated Cases (Number/1000 people at risk)')
-plt.title('Estimated Incidence of Malaria Cases per 1000 people at risk')
-#with Plotly
+#Plotting estimated incidence of Malaria with Plotly
 years_list_inc = [str(num) for num in range(2000,2019)]
 inc_cases_region_ = pd.melt(inc_cases_region, id_vars=['WHO_Region'], value_vars=years_list_inc,
                         var_name='Year', value_name='Inc_Cases')
 fig7 = px.line(inc_cases_region_, x='Year', y='Inc_Cases', color='WHO_Region',
                title='Estimated Incidence of Malaria Cases per 1000 people at risk',
                labels={'Inc_Cases':'Estimated Cases (Number/1000 people at risk)'})
-fig7.write_image('Figures/Inc_Malaria_WHORegion.pdf')
+fig7.write_image('Figures/line/Inc_Malaria_WHORegion.pdf')
 
-SA=['Angola','Botswana','Eswatini','Lesotho','Malawi','Mozambique',
-    'Namibia','South Africa','Zambia','Zimbabwe']
-EA=['Comoros','Djibouti','Eritrea','Ethiopia','Kenya','Madagascar',
-    'Mauritius','Rwanda','Seychelles','Somalia','South Sudan','Sudan',
-    'United Republic of Tanzania','Uganda']
-CA=['Burundi','Cameroon','Central African Republic','Chad',
-    'Congo','Democratic Republic of Congo',
-    'Equatorial Guinea','Gabon','Sao Tome and Principe']
-NA=['Algeria','Egypt','Libyan Arab Jamahiriya','Morocco','Tunisia']
-WA=['Benin','Burkina Faso','Cape Verde','Côte d\'Ivoire',
-    'Gambia','Ghana','Guinea','Guinea-Bissau','Liberia',
-    'Mali','Niger','Nigeria','Senegal','Sierra Leone','Togo','Mauritania']
-
-Africa_REGIONS=[SA,EA,CA,NA,WA]
-#Cross checking WHO and AU naming system
-#rename mislabelled countries
-for region in Africa_REGIONS:
-    for country in region:
-        if country not in countries_WHO:     #countries_WHO
-            print('**Mislabelled: {}'.format(country))
-            for name in African_countries_WHO:
-                #print(country, name)
-                if (country[-3:] or country[:3]) in name:
-                    print('Could be this name {}'.format(name))
-
-#Making a country list of the AU regions above
-AU_country_list=[]
-for region in Africa_REGIONS:
-    for country in region:
-        AU_country_list.append(country)
-inc_cases_africa = inc_cases[inc_cases['Country'].isin(AU_country_list)].reset_index(drop=True)
-inc_cases_africa = inc_cases_africa.drop('WHO_Region',axis=1)
-inc_cases_africa_countrylist = inc_cases_africa['Country'].tolist()
+# =============================================================================
+# SA=['Angola','Botswana','Eswatini','Lesotho','Malawi','Mozambique',
+#     'Namibia','South Africa','Zambia','Zimbabwe']
+# EA=['Comoros','Djibouti','Eritrea','Ethiopia','Kenya','Madagascar',
+#     'Mauritius','Rwanda','Seychelles','Somalia','South Sudan','Sudan',
+#     'United Republic of Tanzania','Uganda']
+# CA=['Burundi','Cameroon','Central African Republic','Chad',
+#     'Congo','Democratic Republic of Congo',
+#     'Equatorial Guinea','Gabon','Sao Tome and Principe']
+# NA=['Algeria','Egypt','Libyan Arab Jamahiriya','Morocco','Tunisia']
+# WA=['Benin','Burkina Faso','Cape Verde','Côte d\'Ivoire',
+#     'Gambia','Ghana','Guinea','Guinea-Bissau','Liberia',
+#     'Mali','Niger','Nigeria','Senegal','Sierra Leone','Togo','Mauritania']
+# 
+# Africa_REGIONS=[SA,EA,CA,NA,WA]
+# #Cross checking WHO and AU naming system
+# #rename mislabelled countries
+# for region in Africa_REGIONS:
+#     for country in region:
+#         if country not in countries_WHO:     
+#             print('**Mislabelled: {}'.format(country))
+#             for name in countries_WHO:
+#                 #print(country, name)
+#                 if (country[-3:] or country[:3]) in name:
+#                     print('Could be this name {}'.format(name))
+# 
+# #Making a country list of the AU regions above
+# AU_country_list=[]
+# for region in Africa_REGIONS:
+#     for country in region:
+#         AU_country_list.append(country)
+# inc_cases_africa = inc_cases[inc_cases['Country'].isin(AU_country_list)].reset_index(drop=True)
+# inc_cases_africa = inc_cases_africa.drop('WHO_Region',axis=1)
+# inc_cases_africa_countrylist = inc_cases_africa['Country'].tolist()
+# =============================================================================
 
 AU_Dict={
         'SA':['Angola','Botswana','Eswatini','Malawi','Mozambique',
@@ -248,36 +263,56 @@ AU_Dict={
               'Mali','Niger','Nigeria','Senegal','Sierra Leone','Togo','Mauritania']
         }
 
+#Cross checking WHO and AU naming system
+#rename mislabelled countries
+for region,countries in AU_Dict.items():
+    for country in countries:
+        if country not in countries_WHO:     
+            print('**Mislabelled: {}'.format(country))
+            for name in countries_WHO:
+                #print(country, name)
+                if (country[-3:] or country[:3]) in name:
+                    print('Could be this name {}'.format(name))
+
+AU_country_list=[]
+for region,countries in AU_Dict.items():
+    for country in countries:
+        AU_country_list.append(country)
+inc_cases_africa = inc_cases[inc_cases['Country'].isin(AU_country_list)].reset_index(drop=True)
+inc_cases_africa = inc_cases_africa.drop('WHO_Region',axis=1)
+inc_cases_africa_countrylist = inc_cases_africa['Country'].tolist()
+
 #Assiging an AU subregion to each African country
 inc_cases_africa_regionlist=[]
 for country in inc_cases_africa_countrylist:
     for region,countries in AU_Dict.items():
         if country in countries:
-            inc_cases_africa_regionlist.append(region)
-
-#print(inc_cases_africa_regionlist)
+            inc_cases_africa_regionlist.append(region)            
 inc_cases_africa.insert(1,'AU_Region',inc_cases_africa_regionlist,True)
 
 #Plotting subregions
-inc_AU_region = inc_cases_africa.groupby('AU_Region').mean().reset_index()
-plt.figure()
-ax=plt.subplot()
-for region,countries in AU_Dict.items():
-    y = inc_AU_region[inc_AU_region['AU_Region']==region].values.tolist()[0][1:]
-    plt.plot(inc_years, y, label=region)
-ax.set_xticks(range(len(inc_years)))
-ax.set_xticklabels(inc_years,rotation=45)
-plt.legend()
-plt.title('Incidence of Malaria by African Subregion')
-plt.xlabel('Years')
-plt.ylabel('Malaria Cases (Number/1000 people at risk)')
+# =============================================================================
+#inc_AU_region = inc_cases_africa.groupby('AU_Region').mean().reset_index()
+# plt.figure()
+# ax=plt.subplot()
+# for region,countries in AU_Dict.items():
+#     y = inc_AU_region[inc_AU_region['AU_Region']==region].values.tolist()[0][1:]
+#     plt.plot(inc_years, y, label=region)
+# ax.set_xticks(range(len(inc_years)))
+# ax.set_xticklabels(inc_years,rotation=45)
+# plt.legend()
+# plt.title('Incidence of Malaria by African Subregion')
+# plt.xlabel('Years')
+# plt.ylabel('Malaria Cases (Number/1000 people at risk)')
+# =============================================================================
 #with Plotly
+inc_AU_region = inc_cases_africa.groupby('AU_Region').mean().reset_index()
 inc_AU_region = pd.melt(inc_AU_region, id_vars=['AU_Region'], value_vars=years_list_inc,
                         var_name='Year', value_name='Inc_Cases')
 fig8 = px.line(inc_AU_region, x='Year', y='Inc_Cases',
                title='Incidence of Malaria by African Subregion', color='AU_Region',
                labels={'Inc_Cases':'Malaria Cases (Number/1000 people at risk)'})
-fig8.write_image('Figures/Inc_Malaria_AURegion.pdf')
+fig8.write_image('Figures/line/Inc_Malaria_AURegion.pdf')
 
 #Outcomes:
 ''' Figure 4 Shows the same trend for all African regions. Surprising.
@@ -289,7 +324,8 @@ but not necessarily trend. Has climate changed trendwise?
     Does it have something to do with CLimate change, Mosquito prevalence,
     Rainfall/water prevalence trends etc.?
 '''
-
+#turn off interactive plotting
+plt.ioff()
 #Plotting cases by selected African countries
 plt.figure()
 ax=plt.subplot()
@@ -305,30 +341,32 @@ plt.ylabel('Malaria Cases (Number/1000 people at risk)')
 plt.legend()
 ax.set_xticks(range(len(inc_years)))
 ax.set_xticklabels(inc_years, rotation=45)
-#num_afr = inc_cases_africa['Country'].nunique()
-#print(num_afr)
+plt.savefig('Figures/line/Selected_Countries.pdf')
 
-#Plotting countries within selected African subregion
+# =============================================================================
+# Africa_REGIONS_name=['SA','EA','CA','NA','WA']
+# chosen_region = 'SA'
+# =============================================================================
+#next selection
 Africa_REGIONS_name=['SA','EA','CA','NA','WA']
-chosen_region = 'SA'
+for region in Africa_REGIONS_name:
+    plt.figure()
+    ax=plt.subplot()
+    for index,row in inc_cases_africa.iterrows():
+        region = row.values.tolist()[1]
+        if region == region:
+            y = row.values.tolist()[2:]
+            country = row.values.tolist()[0]
+            plt.plot(inc_years, y, label=country)
+    ax.set_xticks(range(len(inc_years)))
+    ax.set_xticklabels(inc_years, rotation=45)
+    plt.title('Incidence rate in selected countries')
+    plt.xlabel('Years')
+    plt.ylabel('Malaria Cases (Number/1000 people at risk)')
+    plt.legend()
+    plt.savefig('Figures/line/Selected_Region_{}.pdf'.format(region))
 
-plt.figure()
-ax=plt.subplot()
-for index,row in inc_cases_africa.iterrows():
-    region = row.values.tolist()[1]
-    if region == 'EA':
-        y = row.values.tolist()[2:]
-        country = row.values.tolist()[0]
-        plt.plot(inc_years, y, label=country)
-
-ax.set_xticks(range(len(inc_years)))
-ax.set_xticklabels(inc_years, rotation=45)
-plt.title('Incidence rate in selected countries')
-plt.xlabel('Years')
-plt.ylabel('Malaria Cases (Number/1000 people at risk)')
-plt.legend()
-
-#bar chart countries africa - total cases - Plotly
+#bar chart countries africa 
 est_cases_african_countries = est_cases[est_cases['WHO_Region']=='Africa'].reset_index(drop=True)
 est_cases_african_countries['est_cases_max_2017'] = est_cases_max[est_cases_max['WHO_Region']=='Africa']['2017'].reset_index(drop=True) - est_cases_african_countries['2017']
 est_cases_african_countries['est_cases_min_2017'] = est_cases_african_countries['2017'] - est_cases_min[est_cases_min['WHO_Region']=='Africa']['2017'].reset_index(drop=True)
@@ -343,8 +381,7 @@ fig4 = px.bar(est_cases_african_countries, x='2017', y='Country',
                       'Country':''
                       })
 fig4.update_traces(error_x_color='blue',error_x_thickness=1)
-fig4.write_image('EstimatedCases_Africa.pdf')
-#print(fig4)
+fig4.write_image('Figures/bar/EstimatedCases_Africa.pdf')
 
 #top 5 countries as percentage of worldwide cases
 total_cases = est_cases['2017'].sum()
@@ -355,11 +392,13 @@ fig5 = px.bar(est_cases_top5, x='2017_Perc', y='Country',
               labels={'2017_Perc':'Percentage of Worldwide Cases (%)',
                       'Country':''
                       })
-fig5.write_image('Top5.pdf')
+fig5.write_image('Figures/bar/Highest_Malaria_Cases.pdf')
 est_cases = est_cases.drop('2017_Perc',axis=1)
-#36% (over a third) of all cases are shared between two countries: Nigeria and DRC
-#50% of all cases are come from 5 countries
 
+# =============================================================================
+# #36% (over a third) of all cases are shared between two countries: Nigeria and DRC
+# #50% of all cases are come from 5 countries
+# =============================================================================
 
 #bar chart countries africa - incidence cases
 inc_cases_africa=inc_cases_africa.sort_values('2018').reset_index(drop=True)
@@ -382,35 +421,33 @@ for trace in fig3.data:
         if trace.name == key:
             trace.name=value
             break
-fig3.write_image('Inc_Malaria_AfricanCountries.pdf')
-#inc_cases_africa=inc_cases_africa.sort_values('Country').reset_index(drop=True)
+fig3.write_image('Figures/bar/Inc_Malaria_AfricanCountries.pdf')
+
+# =============================================================================
+# #inc_cases_africa=inc_cases_africa.sort_values('Country').reset_index(drop=True)
+# =============================================================================
 
 
-####===============Correlations===================================
-#Temperature
-temp_df = pd.read_csv('climate/GlobalLandTemperaturesByCountry.csv')
+####---------------------Weather Features------------------------------
+#Berkeley Earth Temperature (use as cross check)
+temp_df = pd.read_csv('Data/Berkeley_Earth/GlobalLandTemperaturesByCountry.csv')
 temp_df = temp_df[temp_df['Country'].isin(inc_cases_africa_countrylist)].reset_index(drop=True)
 temp_df['Year'] = [num.split('-')[0] for num in temp_df.Date.values]
 temp_df= temp_df.groupby(['Country','Year']).mean().reset_index()
 list5 = [str(num) for num in range(2000,2014)]
 temp_df = temp_df[temp_df['Year'].isin(list5)].reset_index(drop=True)
-
 temp_df_allyears=pd.DataFrame({'Country':[],'Year':[],'AverageTemperature':[],
         'AverageTemperatureUncertainty':[],'Malaria_Cases_Year':[]})
 for Selected_Year in list5:
     temp_df_year = temp_df[temp_df['Year']==Selected_Year].reset_index(drop=True)
     temp_df_countries = temp_df_year['Country'].tolist()
     inc_cases_africa_chopped=inc_cases_africa[inc_cases_africa['Country'].isin(temp_df_countries)].reset_index(drop=True)
-
     temp_df_year=temp_df_year.sort_values('Country').reset_index(drop=True)
     inc_cases_africa_chopped=inc_cases_africa_chopped.sort_values('Country').reset_index(drop=True)
     temp_df_year['Malaria_Cases_Year']=inc_cases_africa_chopped[Selected_Year]
     temp_df_allyears=temp_df_allyears.append(temp_df_year)
-
 fig5=px.scatter(temp_df_allyears, x='AverageTemperature', y='Malaria_Cases_Year')
-#fig5.show(renderer='browser')
-fig5.write_image('scatter.pdf')
-
+fig5.write_image('Figures/scatter/Berkeley_Earth_Temperature.pdf')
 
 #Reading and Organising World Weather Online Data
 WWO_Africa_list=['Angola','Botswana','Lesotho','Malawi','Mozambique','Namibia','South_Sudan','Sudan',
@@ -421,18 +458,15 @@ WWO_Africa_list=['Angola','Botswana','Lesotho','Malawi','Mozambique','Namibia','
              'Benin','Burkina_Faso','Cape_Verde', "Cote_d'Ivoire",'Gambia','Ghana','Guinea',
              'Guinea-Bissau','Liberia','Mali','Niger','Nigeria','Senegal','Sierra_Leone','Togo',
              'Mauritania']
-
 WWO_years = [str(num) for num in range(2009,2018)] 
-WWO_df_master = pd.read_csv('WeatherData_API/countries/2013/Algeria.csv')
+WWO_df_master = pd.read_csv('Data/World_Weather_Online/countries/2013/Algeria.csv')
 WWO_df_columns = WWO_df_master.columns.tolist()
 WWO_df_columns = WWO_df_columns[0:3] + WWO_df_columns[16:21] + WWO_df_columns[24:25]
 WWO_df = pd.DataFrame()
-
 for year in WWO_years:
     for country in WWO_Africa_list:
-        WWO_df_master = pd.read_csv('WeatherData_API/countries/{}/{}.csv'.format(year,country))
+        WWO_df_master = pd.read_csv('Data/World_Weather_Online/countries/{}/{}.csv'.format(year,country))
         WWO_df = WWO_df.append(WWO_df_master[WWO_df_columns], ignore_index=True)
-
 WWO_df['Year'] = [date.split('-')[0] for date in WWO_df['date_time'].values]
 WWO_df = WWO_df.groupby(['location','Year']).mean().reset_index()
 WWO_inc = inc_cases.drop(['WHO_Region'],axis=1)
@@ -459,42 +493,6 @@ WWO_df = WWO_df[WWO_Final_columns]
 for name in WWO_Final_columns[2:9]:
     fig6=px.scatter(WWO_df, x=name, y='Inc_Cases')
     fig6.write_image('Figures/scatter/{}.pdf'.format(name))
-    
-    
-###---------------------------To Delete
-# =============================================================================
-# #Mosquito Nets
-# #Does not state whether total nets or only nets provided by government / charities
-# GlobalFund_df_master = pd.read_csv('Data/Global_Fund/GlobalFund_Malaria.csv')
-# GlobalFund_df = GlobalFund_df_master[GlobalFund_df_master['Indicator'] == 'Mosquito nets distributed']
-# GlobalFund_df = GlobalFund_df.rename(columns={'Location':'Country','Period':'Year'})
-# 
-# #Africa_list2 = [name.replace('_',' ') for name in WWO_Africa_list]
-# Africa_list2=['Angola','Botswana','Eswatini','Malawi','Mozambique','Namibia','South Sudan','Sudan',
-#               'South Africa','Zambia','Zimbabwe','Comoros','Djibouti','Eritrea','Ethiopia','Kenya',
-#               'Madagascar','United Republic of Tanzania','Uganda','Burundi','Cameroon','Central African Republic',
-#               'Chad','Democratic Republic of Congo','Congo','Equatorial Guinea','Gabon','Mauritius',
-#               'Somalia','Sao Tome and Principe','Algeria','Egypt','Libya','Morocco','Tunisia',
-#               'Benin','Burkina Faso','Cape Verde', "Côte d'Ivoire",'Gambia','Ghana','Guinea',
-#               'Guinea-Bissau','Liberia','Mali','Niger','Nigeria','Senegal','Sierra Leone','Togo',
-#               'Mauritania','Rwanda','Seychelles']
-# # =============================================================================
-# # print(GlobalFund_df_master['Location'].tolist())
-# # print('')
-# # for name in Africa_list2:
-# #     if name not in GlobalFund_df_master['Location'].tolist():
-# #         print(name)
-# # =============================================================================
-# GlobalFund_df = GlobalFund_df[GlobalFund_df['Country'].isin(Africa_list2)]
-# Names_Crosscheck(GlobalFund_df_master['Location'], est_cases['Country'])
-# =============================================================================
-
-###----------------------------------------
-
-#Pesticide 
-
-
-#Malaria Cases Treated
 
 #Funding per Capita by Country and Year
 Funding_df = pd.read_excel('Data/WHO/funding.xls',sheet_name='Funding')
@@ -590,7 +588,9 @@ Funding_df = pd.merge(Funding_df, Pop_df, how='inner',
 Funding_df = Funding_df.drop('Country Name',axis=1)
 Funding_df['Funding_per_capita'] = Funding_df['Total_Funding']/Funding_df['Population']
 
-#Anomoly_list = Funding_df.index[Funding_df['Funding_per_capita']>300].tolist()
+# =============================================================================
+# #Anomoly_list = Funding_df.index[Funding_df['Funding_per_capita']>300].tolist()
+# =============================================================================
 
 #adding est_cases to data frame
 years=[str(num) for num in range(2016,2018)]
@@ -628,14 +628,14 @@ Funding_ITN = pd.merge(Funding_ITN, Funding_df, how='inner', left_on=['Country',
 fig9 = px.scatter(Funding_df, x='Funding_per_capita', y='Inc_Cases')#range_x=[0,50]
 fig9.write_image('Figures/scatter/Funding.pdf')
 
-fig12 = px.scatter(Funding_df, x='Total_Funding', y='Pop_Perc_Est_Cases')
+fig12 = px.scatter(Funding_df, x='Funding_per_capita', y='Pop_Perc_Est_Cases')
 fig12.write_image('Figures/scatter/Funding_PopPercCases.pdf')
 
 #plotting avg funding_per_capita and inc_cases by year
 Funding_Africa_Year = Funding_df.groupby('Year').mean().reset_index()
 for value in ['Funding_per_capita','Inc_Cases','Est_Cases']:
     fig10 = px.bar(Funding_Africa_Year, x='Year', y=value)
-    fig10.write_image('Figures/Funding_{}.pdf'.format(value))
+    fig10.write_image('Figures/bar/Funding_{}.pdf'.format(value))
     
 fig11 = px.scatter(Funding_ITN, x='Pop_Perc_ITN', y='Inc_Cases')
 fig11.write_image('Figures/scatter/ITN_Inc.pdf')
