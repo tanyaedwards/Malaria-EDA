@@ -1,8 +1,6 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-Created on Tue Jul 21 13:40:51 2020
-
 @author: tanyaedwards
 
 Malaria Explorative Data Analysis Project
